@@ -1,0 +1,4 @@
+amovel([0, -10, 0, 0, 0, 0], mod=DR_MV_MOD_REL)
+while TRUE :
+    force = get_tool_force()
+    tp_log("y = {}".format(force[1]))
