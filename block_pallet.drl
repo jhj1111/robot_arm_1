@@ -104,8 +104,9 @@ def pick_obj(i_num, xi, yi):
     #yi = yi - 18.16
     #setvel(1500, 1000)
     joint_close()
+    z, rx, ry, rz = get_current_posx(ref=102)[2:]
     # 목표지점 이동
-    movel(posx(xi, yi, 0.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+    movel(posx(xi, yi, z, rx, ry, rz), ref=102, mod=DR_MV_MOD_ABS)
     movel(posx(0.0, 0.0, -50.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
     pos, _ = vertical_move_with_force_dectection()
     z = pos[2]
@@ -164,14 +165,20 @@ def main(i_num, start, end):
 global Global_long, Global_mid, Global_short, i_num
 global Global_pallet_pose_in, Global_pallet_pose_out
 Global_long, Global_mid, Global_short = 0, 0, 0    #height = 40, 30, 20
-Global_pallet_pose_in = pallet_position(0, -2)
-Global_pallet_pose_out = pallet_position(171, 16)
+Global_pallet_pose_in = pallet_position(21.49, 16.16)
+Global_pallet_pose_out = pallet_position(171, 16.16)
 start_i = last_pos
 thread_id = thread_run(force_monitor_thread, loop=True)
 for i_num in range(start_i, 9):
-    last_pos = i_num
     tp_log("last_pos = {}".format(last_pos))
     main(i_num, Global_pallet_pose_in, Global_pallet_pose_out)
-    #main(i_num, Global_pallet_pose_out, Global_pallet_pose_in)
+    # 마지막위치 저장
+    last_pos = i_num + 1
+else : last_pos = 9
+
+start_i = last_pos-9
+for i_num in range(start_i, 9):
+    main(i_num, Global_pallet_pose_out, Global_pallet_pose_in)
+    last_pos = i_num + 10
+else : last_pos = 0
 thread_stop(thread_id)
-last_pos = 0
