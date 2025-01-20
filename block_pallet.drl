@@ -1,4 +1,6 @@
 #block
+global Global_long, Global_mid, Global_short, i_num, last_pos
+global Global_pallet_pose_in, Global_pallet_pose_out
 def grab_signal():
     wait_digital_input(1, ON)
     wait_digital_input(2, OFF)
@@ -23,6 +25,54 @@ def joint_grab():
 def setvel(v,a):
     set_velx(v)
     set_accx(a)
+def force_monitor_thread():
+    try:
+        while True:
+            # 툴과 로봇에 작용하는 힘 측정
+            tool_force = get_tool_force(DR_TOOL)  # TCP 기준 힘
+            external_torque = get_external_torque()  # 로봇 관절에 가해지는 외력
+            # 로그 출력
+            tp_log("Tool Force: {}".format(tool_force))
+            tp_log("External Torque: {}".format(external_torque))
+            # 외력 기준치 초과 시 동작 정지
+            if max(abs(tool_force[0]), abs(tool_force[1]), abs(tool_force[2])) > 20 or \
+               abs(max(external_torque)) > 20:  # 기준값은 필요에 따라 변경
+                tp_log("Force or torque limit exceeded! Stopping robot.")
+                stop(DR_QSTOP)
+                break  # 스레드 종료
+            # 일정 시간 대기 후 다시 측정
+            wait(0.1)
+    except DR_Error as e:
+        tp_log("Error in force monitor thread: {}".format(e))
+def pallet_position(x1, y1):
+    #x1 = 0
+    #y1 = 0
+    z = 100
+    dx = 51
+    dy = 51
+    # Example Data
+    pos1 = posx(x1, y1, z, 0, 180, 0) # Teaching pose1
+    pos2 = posx(x1+2*dx, y1, z, 0, 180, 0) # Teaching pose2
+    pos3 = posx(x1, y1+2*dy, z, 0, 180, 0) # Teaching pose3
+    pos4 = posx(x1+2*dx, y1+2*dy, z, 0, 180, 0) # Teaching pose4
+    direction = 1 # Normal Pallet -> 0: Snake, 1: Zigzag / Rhombus Pallet -> 2: Snake, 3: Zigzag
+    row = 3
+    column = 3
+    stack = 1
+    thickness = 0
+    point_offset = [0, 0, 0] # Offset for calculated pose
+    # Total count
+    if direction < 2: # Normal Pallet
+        total_count = row * column * stack
+    else: # Rhombus Pallet
+        total_count = (row * column - int(row/2)) * stack
+    Pallet_Pose = []
+    # Calculate Pallet Pose (Resulted in base coordinate)
+    for pallet_index in range(0, total_count):
+        pos = get_pattern_point(pos1, pos2, pos3, pos4, pallet_index, direction, row, column, stack, thickness, point_offset)
+        tp_log("{}".format(pos))
+        Pallet_Pose.append(pos)
+    return Pallet_Pose
 def is_force_detected():
     force = get_tool_force(DR_TOOL)
     #tp_log("{}".format(force))
@@ -69,83 +119,59 @@ def pick_obj(i_num, xi, yi):
     movel(posx(0.0, 0.0, 100.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
     # return blcok 높이
     return z
-def move_obj(z):
+def move_obj(z, end):
     global Global_long, Global_mid, Global_short
-    x1 = 171
-    x2 = 25+26
-    y1 = 10+10
-    y2 = 25+26
     if z>30 :
-        x = x1 + 2*x2
-        y = y1 + Global_long*y2
+        index = 2 + 3*Global_long
         Global_long = Global_long+1
     elif z>20 and z<30 :
-        x = x1 + x2
-        y = y1 + Global_mid*y2
+        index = 1 + 3*Global_mid
         Global_mid = Global_mid + 1
     elif z<20 :
-        x = x1
-        y = y1 + Global_short*y2
+        index = 0 + 3*Global_short
         Global_short = Global_short + 1
+    x = end[index][0]
+    y = end[index][1]
     movel(posx(x, y, 100.0, 180.0, -180.0, 180.0), ref=102, mod=DR_MV_MOD_ABS)
 def put_obj(z):
     h = 115
     # block 높이만큼 하강
     movel(posx(0.0, 0.0, z-h+20, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
-    setvel(1000, 1000)
+    #setvel(1000, 1000)
     movel(posx(0.0, 0.0, -20, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
-    setvel(3000, 1000)
+    setvel(1000, 1000)
     joint_open()
+    setvel(3000, 1000)
     movel(posx(0.0, 0.0, -z+h, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
 def crashed():
     force = get_tool_force(DR_TOOL)
     if force[0]>8 or force[1]>8 :
         stop(DR_QSTOP)
-def pick_and_put(i_num, xi, yi):
+def pick_and_put(i_num, end, xi, yi):
     z = pick_obj(i_num, xi, yi)
-    move_obj(z)
+    move_obj(z, end)
     put_obj(z)
-def main(i_num, Pallet_Pose):
+def main(i_num, start, end):
     pos1 = [9.94, 28.25, 64.48, -0.90, 87.54, -261.37]
-    xi = Pallet_Pose[i_num][0]
-    yi = Pallet_Pose[i_num][1]
+    #초기위치로 이동
+    movej(pos1, v=3000, a=1000)
+    xi = start[i_num][0]
+    yi = start[i_num][1]
     tp_log("xi = {}".format(xi))
     tp_log("yi = {}".format(yi))
-    #초기위치로 이동
-    movej(pos1, v=1000, a=1000)
-    pick_and_put(i_num, xi, yi)
+    pick_and_put(i_num, end,  xi, yi)
 #이동 블락
 global Global_long, Global_mid, Global_short, i_num
+global Global_pallet_pose_in, Global_pallet_pose_out
 Global_long, Global_mid, Global_short = 0, 0, 0    #height = 40, 30, 20
-# pallet 좌표
-#x1 = 21.490
-#y1 = 18.160
-x1 = 0
-y1 = 0
-z = 100
-dx = 51
-dy = 51
-# Example Data
-pos1 = posx(x1, y1, z, 0, 180, 0) # Teaching pose1
-pos2 = posx(x1+2*dx, y1, z, 0, 180, 0) # Teaching pose2
-pos3 = posx(x1, y1+2*dy, z, 0, 180, 0) # Teaching pose3
-pos4 = posx(x1+2*dx, y1+2*dy, z, 0, 180, 0) # Teaching pose4
-direction = 0 # Normal Pallet -> 0: Snake, 1: Zigzag / Rhombus Pallet -> 2: Snake, 3: Zigzag
-row = 3
-column = 3
-stack = 1
-thickness = 0
-point_offset = [0, 0, 0] # Offset for calculated pose
-# Total count
-if direction < 2: # Normal Pallet
-    total_count = row * column * stack
-else: # Rhombus Pallet
-    total_count = (row * column - int(row/2)) * stack
-Pallet_Pose = []
-# Calculate Pallet Pose (Resulted in base coordinate)
-for pallet_index in range(0, total_count):
-    pos = get_pattern_point(pos1, pos2, pos3, pos4, pallet_index, direction, row, column, stack, thickness, point_offset)
-    tp_log("{}".format(pos))
-    Pallet_Pose.append(pos)
-for i_num in range(9):
-    main(i_num, Pallet_Pose)
+Global_pallet_pose_in = pallet_position(0, -2)
+Global_pallet_pose_out = pallet_position(171, 16)
+start_i = last_pos
+thread_id = thread_run(force_monitor_thread, loop=True)
+for i_num in range(start_i, 9):
+    last_pos = i_num
+    tp_log("last_pos = {}".format(last_pos))
+    main(i_num, Global_pallet_pose_in, Global_pallet_pose_out)
+    #main(i_num, Global_pallet_pose_out, Global_pallet_pose_in)
+thread_stop(thread_id)
+last_pos = 0
