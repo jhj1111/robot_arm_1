@@ -1,0 +1,69 @@
+{
+  "Count": "11",
+  "Variable0": {
+    "Type": "Registry",
+    "Name": "Task_N",
+    "ValueType": "Integer",
+    "Value": "0"
+  },
+  "Variable1": {
+    "Type": "Registry",
+    "Name": "p1",
+    "ValueType": "Posx",
+    "Value": "posx(552.00,-262.00,36.50,-180.00,-180.00,41.31)"
+  },
+  "Variable2": {
+    "Type": "Registry",
+    "Name": "p2",
+    "ValueType": "Posx",
+    "Value": "posx(446.00,-264.00,36.50,-180.00,-180.00,41.31)"
+  },
+  "Variable3": {
+    "Type": "Registry",
+    "Name": "p3",
+    "ValueType": "Posx",
+    "Value": "posx(497.5,-169.00,36.50,-180.00,-180.00,41.31)"
+  },
+  "Variable4": {
+    "Type": "Registry",
+    "Name": "p4",
+    "ValueType": "Posx",
+    "Value": "posx(497.50,-230.00,36.50,-180.00,-180.00,41.31)"
+  },
+  "Variable5": {
+    "Type": "Registry",
+    "Name": "RG_Pose_Approach",
+    "ValueType": "Posx",
+    "Value": "posx(0.00,0.00,-100.00,0.00,0.00,0.00)"
+  },
+  "Variable6": {
+    "Type": "Registry",
+    "Name": "RG_Pose_Each",
+    "ValueType": "Posx",
+    "Value": "posx(4.50,301.00,0.00,0.00,0.00,0.00)"
+  },
+  "Variable7": {
+    "Type": "Registry",
+    "Name": "LF_Wait_Pose",
+    "ValueType": "Posx",
+    "Value": "posx(497.50,-230.00,194.20,50.43,180.00,48.87)"
+  },
+  "Variable8": {
+    "Type": "Registry",
+    "Name": "Last_Task_N",
+    "ValueType": "Integer",
+    "Value": "8"
+  },
+  "Variable9": {
+    "Type": "Registry",
+    "Name": "Task_LR",
+    "ValueType": "Integer",
+    "Value": "0"
+  },
+  "Variable10": {
+    "Type": "Registry",
+    "Name": "Input_Task_N",
+    "ValueType": "Integer",
+    "Value": "8"
+  }
+}

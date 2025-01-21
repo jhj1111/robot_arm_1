@@ -1,0 +1,119 @@
+def setvel(v, a):
+    set_velx(v)
+    set_accx(a)
+
+def grab_signal():
+    wait_digital_input(1, ON)
+    wait_digital_input(2, OFF)
+
+def open_signal():
+    wait_digital_input(1, OFF)
+    wait_digital_input(2, ON)
+    
+def joint_open():
+    set_digital_output(1, OFF)
+    set_digital_output(2, ON)
+    open_signal()
+    
+def joint_close():
+    set_digital_output(1, ON)
+    set_digital_output(2, ON)
+
+def joint_grab():
+    set_digital_output(1, ON)
+    set_digital_output(2, OFF)
+    grab_signal()
+
+def pick_obj(x, y):
+    setvel(1500, 1000)
+    # 해당위치로 이동
+    movel(posx(x, y, 50, 90.0, -180.0, 90.0), mod=DR_MV_MOD_ABS, ref=103)
+    joint_open()
+    wait(1)
+    # 물체 집기고 올리기
+    movel(posx(0.0, 0.0, -50, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    joint_grab()
+    movel(posx(0.0, 0.0, 60, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    
+def move_obj():
+    setvel(1500, 1000)
+    #이동
+    pre_pos, _ = get_current_posx(ref=103)
+    movel(posx(300.0, -5.0, 0.0, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    #current_pos, _ = get_current_posx(ref=103)
+    #movel(posx(current_pos[0],pre_pos[1]-2.8, current_pos[2], 90.0, -180.0, 90.0), mod=DR_MV_MOD_ABS, ref=103)
+    
+def put_obj():
+    move_obj()
+    #물체 
+    movel(posx(0.0, 0.0, -40, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    setvel(100, 30)
+    movel(posx(0.0, 0.0, -20, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    joint_open()
+    #놓고 올리기
+    setvel(1500, 1000)
+    movel(posx(0.0, 0.0, 50, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    
+# 기어 조립 상태 확인
+def check_gear():
+    #force = get_tool_force(DR_TOOL)
+    #tp_log("tool_force x = {}, y = {}, z = {}, rx = {}, rt = {}, rz = {}".format(force[0], force[1], force[2], force[3], force[4], force[5]))
+    move_periodic(amp=[0, 0, 0, 0, 0, 20], period=[0, 0, 0, 0, 0, 1], repeat=1, ref=103)
+    
+# 기어 조립 함수
+def center_gear(x, y):
+    # 1. 물체를 집고 이동
+    pick_obj(x, y)
+    move_obj()
+    movel(posx(0.0, 0.0, -30.0, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    
+    # 2. 순응 제어 설정
+    task_compliance_ctrl()
+    set_stiffnessx([300, 300, 500, 1500, 1500, 1500], time=0.5)
+    wait(0.8)
+    set_desired_force(fd=[0, 0, -20, 0, 0, 0], dir=[0, 0, 1, 0, 0, 0])
+    # 3. 기어 조립 작업
+    force = get_tool_force(DR_TOOL)
+    z_force = force[2]
+    tp_log("prev_tool_force x = {}, y = {}, z = {}, rx = {}, rt = {}, rz = {}".format(force[0], force[1], force[2], force[3], force[4], force[5]))
+    try:
+        while True:
+            current_pos, _ = get_current_posx(ref=103)
+            current_pos_z = current_pos[2]
+        
+            if check_force_condition(axis=DR_AXIS_Z, max=z_force+10, ref=DR_TOOL) and current_pos_z > 0:
+                check_gear()  # 기어 위치를 조정
+            else:
+               
+                tp_log("Force condition cleared. Stopping.")
+                stop(DR_QSTOP)
+                break
+    except DR_Error as e:
+        tp_log("Error occurred during gear centering {}".format(e))
+    finally:
+        # 4. 순응 제어 해제
+        force = get_tool_force(DR_TOOL)
+        tp_log("finall_tool_force x = {}, y = {}, z = {}, rx = {}, rt = {}, rz = {}".format(force[0], force[1], force[2], force[3], force[4], force[5]))
+        tp_log("finall_pos x = {}, y = {}, z = {}, rx = {}, rt = {}, rz = {}".format(current_pos[0], current_pos[1], current_pos[2], current_pos[3], current_pos[4], current_pos[5]))
+        release_compliance_ctrl()
+        tp_log("Compliance control released.")
+    
+    
+    
+#task_compliance_ctrl()
+#set_stiffnessx([100, 100, 100, 500, 500, 500], 0.5)
+#release_compliance_ctrl()
+
+setvel(1500, 1000)
+#pick_obj(80,90)
+#put_obj()
+
+#pick_obj(23.530, 178.910)
+#put_obj()
+
+#pick_obj(127.040, 184.250)
+#put_obj()
+
+center_gear(77.790, 151.130)
+joint_open()
+movel(posx(0.0, 0.0, 50, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)

@@ -1,0 +1,130 @@
+#field_map
+
+
+def grab_open():
+    set_digital_output(1, OFF)
+    set_digital_output(2, ON)
+    
+def grab_pin():
+    set_digital_output(1, ON)
+    set_digital_output(2, OFF)
+
+def grab_block():
+    set_digital_output(1, ON)
+    set_digital_output(2, ON)
+    
+record_pos = {
+"jenga": posx(0.0, 300.0, 0.0, 0.0, 180.0, 0.0),
+"pin":posx(300.0, 150.0, 20.0, 0.0,180.0, 0.0),
+ "jsize": posx(37.5, -110.0, 85.0, 0.0, 0.0, 0.0)
+}
+
+btp = [300.0, 400.0, 100.0, 0.0,180.0, 0.0]
+little_down =[0.0, 0.0, 70.0, 0.0, 0.0, 0.0]
+little_up =[0.0, 0.0, -70.0, 0.0, 0.0, 0.0]
+little_x =[30.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+little_y =[0.0, 25.0, 0.0, 0.0, 0.0, 0.0]
+little_my =[0.0, -25.0, 0.0, 0.0, 0.0, 0.0]
+block_my =[0.0, 50.0, 0.0, 0.0, 0.0, 0.0]
+
+def hold_pin():
+    pin_up_pos = trans(record_pos["pin"],little_down, 199,199)
+    tp_log("{}".format(pin_up_pos))
+    movel(pin_up_pos,time = 3.0,ref = 199)
+    movel(little_down,time = 3.0,ref =  DR_TOOL)
+    grab_pin()
+    mwait(4)
+    movel(little_up,time = 3.0,ref =  DR_TOOL)
+
+def move_jenga():
+    jenga_pos = trans(record_pos["jenga"],record_pos["jsize"], 199,199)
+    tp_log("{}".format(jenga_pos))
+    movel(jenga_pos,vel= 30.0,acc=10.0,ref = 199) 
+    
+    
+
+def slow_push():
+    movel(little_y,vel= 10.0,acc=10.0,ref =  DR_TOOL)
+    movel(little_my,vel= 10.0,acc=10.0,ref =  DR_TOOL)
+
+def game_ready():
+    set_ref_coord(199)
+    task_compliance_ctrl()
+    
+def down_pin():
+    pin_up_pos = trans(record_pos["pin"],little_down, 199,199)
+    tp_log("{}".format(pin_up_pos))
+    movel(pin_up_pos,time = 3.0,ref = 199)
+    movel(little_down,time = 3.0,ref =  DR_TOOL)
+    grab_open()
+    mwait(2)
+    movel(little_up,time = 3.0,ref =  DR_TOOL)    
+
+def get_block():
+    #block_pos = 
+    #movel(block_my,time = 3.0,ref =  DR_TOOL)    
+    jenga_pos = trans(record_pos["jenga"],record_pos["jsize"], 199,199)
+    y_val = [0.0, 90.0, 0.0, 0.0, 0.0, 0.0]
+    get_jenga_pos = trans(jenga_pos,y_val,199,199)
+    tp_log("{}".format(get_jenga_pos))
+    gjp = posx(get_jenga_pos)
+    poslist = [posx([300.0, 400.0, 100.0, 0.0, 180.0, 0.0]), posx([37.500, 280.000, 85.000, 0.000, 180.000, 0.000])]
+    movel(posx([300.0, 400.0, 100.0, 0.0, 180.0, 0.0]),vel= 50.0,acc=30.0, ref = 199)
+    movel(posx([37.500, 350.000, 85.000, 0.000, 180.000, 0.000]),vel= 40.0,acc=10.0, ref = 199)
+    movel(little_my, time=3,ref = DR_TOOL) 
+    grab_block()
+    movel(little_y, time=3,ref = DR_TOOL) 
+    movel(little_y, time=3,ref = DR_TOOL) 
+    movel(little_y, time=3,ref = DR_TOOL) 
+
+def test():
+    movel(btp,vel= 50.0,acc=10.0,ref = 199) 
+    amovel(posx(200.0, -200.0, 0.0, 0.0, 0.0, 0.0), time=10,ref = DR_TOOL) 
+    force_check = 3.0
+    force_condition = check_force_condition(DR_AXIS_Y, max = force_check)
+    while (force_condition):
+           force_condition = check_force_condition(DR_AXIS_Y, max = force_check,ref = 199)
+           tp_log("{}".format(force_condition))
+    movel(btp,vel= 50.0,acc=10.0,ref = 199) 
+
+def test_jenga():
+    jenga_pos = trans(record_pos["jenga"],record_pos["jsize"], 199,199)
+    tp_log("{}".format(jenga_pos))
+    trans_pos = posx(23.0, 0.0, 0.0, 0.0,0.0, 0.0)
+    jenga_pos = trans(jenga_pos,trans_pos, 199,199)
+    mwait(2)
+
+    movel(jenga_pos,vel= 30.0,acc=10.0,ref = 199) 
+    mwait(5)
+
+    [singularity, mod, stx, fd, ref] = get_force_control_state()
+    tp_log("s= {0},m ={1},k={2},f={3},r={4}".format(singularity, mod, stx, fd, ref))
+    amovel(posx(0.0, 30.0, 0.0, 0.0, 0.0, 0.0),vel= 30.0,acc=10.0,ref = DR_TOOL) 
+    #force_check = 3.0
+    #force_condition = check_force_condition(DR_AXIS_Y, max = force_check)
+    while (1):
+           #force_condition = check_force_condition(DR_AXIS_Y, max = force_check,ref = 199)
+           flist = get_tool_force()
+           tp_log("{}".format(flist))
+
+           #[singularity, mod, stx, fd, ref] = get_force_control_state()
+           #tp_log("s= {0},m ={1},k={2},f={3},r={4}".format(singularity, mod, stx, fd, ref))
+           #tp_log("{}".format(force_condition))
+    movel(btp,vel= 50.0,acc=10.0,ref = 199)     
+    
+    
+def main():
+    #grab_open()
+    #test()
+    #grab_open()
+   # game_ready()
+   #hold_pin()
+    test_jenga()
+    #move_jenga()
+    #slow_push()
+    #down_pin()
+    #get_block()
+    
+main()
+#test()
+

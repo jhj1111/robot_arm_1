@@ -1,0 +1,116 @@
+def joint_close():
+    set_digital_output(1, ON)
+    set_digital_output(2, ON)
+    
+def joint_open():
+    set_digital_output(1, OFF)
+    set_digital_output(2,ON)
+    
+def joint_grab():
+    set_digital_output(1, ON)
+    set_digital_output(2, OFF)
+
+def initvel():
+    set_velx(30)
+    set_accx(10)
+    
+def setvel(v,a):
+    set_velx(v)
+    set_accx(a)
+    
+def block_out(z):
+    global Global_long, Global_mid, Global_short
+    if z>30 :
+        x = 171 + 2*(25+26)
+        y = 10 + 10 + Global_long*(25+26)
+        Global_long = Global_long+1
+    elif z>20 and z<30 :
+        x = 171 + (25+26)
+        y = 10 + 10 + Global_mid*(25+26)
+        Global_mid = Global_mid + 1
+    elif z<20 :
+        x = 171
+        y = 10 + 10 + Global_short*(25+26)
+        Global_short = Global_short + 1
+        
+    movel(posx(x, y, 100.0, 180.0, -180.0, 180.0), ref=102, mod=DR_MV_MOD_ABS)
+
+def move_block(x, y, z):
+    x11 = 161.0
+    y11 = 23.0
+    pos = posx(x11 + x, y11 + y, z, 0.0, 0.0, 0.0)
+    
+    movel(pos, ref=DR_TOOL)
+    
+def is_force_detected():
+    force = get_tool_force(DR_TOOL)
+    #tp_log("{}".format(force))
+    #tp_log(min(abs(force[0]), abs(force[1]), abs(force[2])))
+    #return min(abs(force[0]), abs(force[1]), abs(force[2]))
+    tp_log("{}".format(force[2]))
+    return force[2]
+    
+def crashed():
+    force = get_tool_force(DR_TOOL)
+    if force[0]>8 or force[1]>8 :
+        stop(DR_QSTOP)
+    
+def vertical_move_with_force_dectection():
+    initvel()
+    
+    target_pos = posx(0.0, 0.0, 40.0, 0.0, 0.0, 0.0)
+    amovel(target_pos, ref=DR_TOOL)
+    while True:
+        if is_force_detected()<-5 :
+            tp_log("detected")
+            stop(DR_QSTOP)
+            tp_log("stop")
+            movel(posx(0.0, 0.0, 2.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+            set_digital_output(1, OFF)
+            set_digital_output(2, ON)
+            wait(0.5)
+            movel(posx(0.0, 0.0, -2.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+            break
+            
+    return get_current_posx(ref=102)
+    
+def main():
+    global i_num
+    #초기위치로 이동
+    pos1 = [9.94, 28.25, 64.48, -0.90, 87.54, -261.37]
+    #xi = move_num//3 * (26+25)
+    #yi = move_num%3 * (26+25)
+    xi = i_num//3 * (26+25)
+    yi = i_num%3 * (26+25)
+    movej(pos1)
+    joint_close()
+    wait(2.0)
+    movel(posx(xi, yi, 0.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+    i_num = i_num+1
+    
+    movel(posx(0.0, 0.0, -50.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+    pos, _ = vertical_move_with_force_dectection()
+    z = pos[2]
+    
+    setvel(3000, 1000)
+    target_pos = posx(0.0, 0.0, -22.0, 0.0, 0.0, 0.0)
+    movel(target_pos, ref=102, mod=DR_MV_MOD_REL)
+    joint_grab()
+    wait(2.0)
+    
+    movel(posx(0.0, 0.0, 100.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+    
+    block_out(z)
+    
+    movel(posx(0.0, 0.0, z-120.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+    
+    joint_open()
+
+    movel(posx(0.0, 0.0, 100.0, 0.0, 0.0, 0.0), ref=102, mod=DR_MV_MOD_REL)
+                    
+#이동 블락
+global Global_long, Global_mid, Global_short, i_num
+Global_long, Global_mid, Global_short = 0, 0, 0    #height = 40, 30, 20
+i_num = 0
+for _ in range(9):
+    main()

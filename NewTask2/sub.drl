@@ -1,0 +1,8 @@
+
+Last_Task_N= tp_get_user_input("message1", input_type= DR_VAR_INT)
+
+
+total_count = 9
+for pallet_index in range(Last_Task_N, total_count):
+    Last_Task_N = pallet_index
+    tp_log("{}".format(Last_Task_N))

@@ -1,0 +1,11 @@
+Q1 = posj(0,0,90,0,90,0)
+Q2 = posj(0,0,0,0,90,0)
+movej(Q1, vel=10, acc=0)
+      # Moves to the Q1 joint angle at the velocity of 10(deg/sec) and acceleration of 20(deg/sec2).
+movej(Q2, time=5)
+      # Moves to the Q2 joint angle with a reach time of 5 sec.
+movej(Q1, v=30, a=60, r=200)
+      # Moves to the Q1 joint angle and is set to execute the next motion
+      # when the distance from the Q1 space position is 200mm.
+movej(Q2, v=30, a=60, ra= DR_MV_RA_OVERRIDE)
+      # Immediately terminates the last motion and blends it to move to the Q2 joint angle.

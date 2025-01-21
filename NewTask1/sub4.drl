@@ -1,0 +1,7 @@
+for _ in range(10):
+    movej(posj(180.00, -45.00, 135.00, 0.00, -80.00, -180), v=40, a=40, radius=0.00, ra=DR_MV_RA_DUPLICATE)
+    print(get_current_posj)
+    print(get_current_posx)
+    movej(posj(180.00, -45.00, 135.00, 0.00, -110.00, -180), v=40, a=40, radius=0.00, ra=DR_MV_RA_DUPLICATE)
+    print(get_current_posj)
+    print(get_current_posx)

@@ -1,0 +1,15 @@
+{
+  "Count": "2",
+  "Variable0": {
+    "Type": "Registry",
+    "Name": "pallet_index",
+    "ValueType": "Integer",
+    "Value": "11"
+  },
+  "Variable1": {
+    "Type": "Registry",
+    "Name": "pallet2_index",
+    "ValueType": "Integer",
+    "Value": "0"
+  }
+}

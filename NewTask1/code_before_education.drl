@@ -1,0 +1,64 @@
+def grip():
+    set_digital_outputs([1,-2])
+    wait_digital_input(1, ON)
+   
+def ungrip():
+    set_digital_outputs([-1,2])
+    wait_digital_input(2, ON)
+ 
+pos_ready = posj(0, 0, 90, 0, 90, 0)
+
+pos1_target = posx(424.98, -6.8, 40.75, 179.65, -180, 170.31)
+# posx(424.62, -6.89, 49.06, 67.63, -177.81, 58.33)
+
+pos1_app = trans(pos1_target, [0,0,50,0,0,0], DR_BASE, DR_BASE)
+
+pos2_target = posx(573.47, 147.16, 61.35, 17.35, 180, -5.22)
+# posx(574.86, 146.72, 59.66, 65.61, 179.98, 43.06)
+pos2_app = trans(pos2_target, [0,0,15,0,0,0], DR_BASE, DR_BASE)
+
+movej(pos_ready, a=40, v=40)
+ungrip()
+
+movel(pos1_app, v=40, a=40, mod=DR_MV_MOD_ABS, ref=DR_BASE)
+movel(pos1_target, v=40, a=40, mod=DR_MV_MOD_ABS, ref=DR_BASE)
+grip()
+
+movel(pos1_app, v=40, a=40, mod=DR_MV_MOD_ABS, ref=DR_BASE)
+movel(pos2_app, v=40, a=40, mod=DR_MV_MOD_ABS, ref=DR_BASE)
+movel(pos2_target, v=40, a=40, mod=DR_MV_MOD_ABS, ref=DR_BASE)
+
+set_ref_coord(DR_TOOL)
+task_compliance_ctrl()
+fd = [0,0,20,0,0,0]
+fctrl_dir = [0,0,1,0,0,0]
+
+set_desired_force(fd, fctrl_dir, mod=DR_FC_MOD_REL)
+
+while True:
+    force_ext = get_tool_force(DR_TOOL)[2]
+    tp_log("{}".format(force_ext))
+    if force_ext <= -10:
+        amove_periodic(amp=[0,0,0,0,0.0,5], period=2, atime=0.5, repeat=25, ref=DR_TOOL)
+        break
+        
+while True:
+    pos_chk = get_current_posx(ref=DR_BASE)[0][2]
+    if pos_chk <= 50:
+        stop(DR_QSTOP)
+        break
+        
+while True:
+    pos_chk=get_current_posx(ref=DR_BASE)[0][2]
+
+    if pos_chk <= 50:
+        release_compliance_ctrl()
+        set_ref_coord(DR_BASE)
+        ungrip()
+        movel(posx(0,0,100,0,0,0),
+        ref=DR_BASE,
+        mod=DR_MV_MOD_REL,
+        a=50,
+        v=50)
+        break
+        

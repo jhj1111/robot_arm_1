@@ -1,0 +1,29 @@
+class gripper_controller:
+    def gripper_control():
+        if get_digital_input(1)==ON:
+            set_digital_output(2,ON)
+            set_digital_output(1,OFF)
+            wait(0.50)
+        
+        elif get_digital_input(1)==OFF:
+           set_digital_output(2,ON)
+         set_digital_output(1,OFF)
+          wait(0.50)
+      else:
+         pass
+        
+    def release():
+        # SetNode
+        set_digital_output(1,OFF)
+        # SetNode
+        set_digital_output(2,ON)
+        # WaitNode
+        wait(0.50)
+    
+    def grip():
+        # SetNode
+        set_digital_output(1,ON)
+        # SetNode
+        set_digital_output(2,OFF)
+        # WaitNode
+        wait(0.50)

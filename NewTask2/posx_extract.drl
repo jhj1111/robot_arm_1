@@ -1,0 +1,26 @@
+L_pos1 = posx(348.00, -158.00, 70.00, 50.43,180.00,48.87) # Teaching pose1
+L_pos2 = posx(450.00, -158.00, 70.00, 50.43,180.00,48.87) # Teaching pose2
+L_pos3 = posx(348.00, -54.00, 70.00, 50.43,180.00,48.87) # Teaching pose3
+L_pos4 = posx(450.00, -54.00, 70.00, 50.43,180.00,48.87) # Teaching pose4
+R_pos1 = posx(351.00, 42.50, 70.00, 50.43,180.00,48.87) # Teaching pose1
+R_pos2 = posx(453.00, 42.50, 70.00, 50.43,180.00,48.87) # Teaching pose2
+R_pos3 = posx(351.00, 147.00, 70.00, 50.43,180.00,48.87) # Teaching pose3
+R_pos4 = posx(453.00, 147.00, 70.00, 50.43,180.00,48.87) # Teaching pose4
+
+direction = 0 # Normal Pallet -> 0: Snake, 1: Zigzag / Rhombus Pallet -> 2: Snake, 3: Zigzag
+row = 3 
+column = 3 
+stack = 1 
+thickness = 0 
+point_offset = [0, 0, 0] # Offset for calculated pose
+    # Total count
+if direction < 2: # Normal Pallet
+    total_count = row * column * stack
+    
+else: # Rhombus Pallet
+    total_count = (row * column - int(row/2)) * stack
+
+for pallet_index in range(0, total_count): 
+    Pallet_Pose = get_pattern_point(L_pos1, L_pos2, L_pos3, L_pos4, pallet_index, direction, row, column, stack, thickness, point_offset) 
+    # tp_log("point={0}, {1}, {2}".format(Pallet_Pose[pallet_index][0], Pallet_Pose[pallet_index][1], Pallet_Pose[pallet_index][2]))
+    tp_log("x = {0}, y = {1}, z = {2}".format(Pallet_Pose[0], Pallet_Pose[1], Pallet_Pose[2]))

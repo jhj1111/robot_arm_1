@@ -1,0 +1,27 @@
+{
+  "Count": "4",
+  "Variable0": {
+    "Type": "Registry",
+    "Name": "last_pos",
+    "ValueType": "Integer",
+    "Value": "10"
+  },
+  "Variable1": {
+    "Type": "Registry",
+    "Name": "Global_long",
+    "ValueType": "Integer",
+    "Value": "0"
+  },
+  "Variable2": {
+    "Type": "Registry",
+    "Name": "Global_mid",
+    "ValueType": "Integer",
+    "Value": "0"
+  },
+  "Variable3": {
+    "Type": "Registry",
+    "Name": "Global_short",
+    "ValueType": "Integer",
+    "Value": "1"
+  }
+}

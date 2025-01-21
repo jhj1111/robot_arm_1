@@ -1,0 +1,83 @@
+def setvel(v, a):
+    set_velx(v)
+    set_accx(a)
+
+
+def joint_open():
+    set_digital_output(1, OFF)
+    set_digital_output(2, ON)
+    
+def joint_close():
+    set_digital_output(1, ON)
+    set_digital_output(2, ON)
+
+def joint_grab():
+    set_digital_output(1, ON)
+    set_digital_output(2, OFF)
+
+def pick_obj(x, y):
+    setvel(1500, 1000)
+    # 해당위치로 이동
+    movel(posx(x, y, 50, 90.0, -180.0, 90.0), mod=DR_MV_MOD_ABS, ref=103)
+    joint_open()
+    wait(1)
+    # 물체 집기고 올리기
+    movel(posx(0.0, 0.0, -50, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    joint_grab()
+    wait(1)
+    movel(posx(0.0, 0.0, 60, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    
+def move_obj():
+    setvel(1500, 1000)
+    #이동
+    pre_pos, _ = get_current_posx(ref=103)
+    movel(posx(300.0, 0.0, 0.0, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    current_pos, _ = get_current_posx(ref=103)
+    movel(posx(current_pos[0],pre_pos[1]-2.8, current_pos[2], 90.0, -180.0, 90.0), mod=DR_MV_MOD_ABS, ref=103)
+    
+def put_obj():
+    move_obj()
+    #물체 
+    movel(posx(0.0, 0.0, -40, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    setvel(100, 30)
+    movel(posx(0.0, 0.0, -20, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    joint_open()
+    #놓고 올리기
+    movel(posx(0.0, 0.0, 50, 0.0, 0.0, 0.0), mod=DR_MV_MOD_REL, ref=103)
+    
+def check_gear():
+        amove_periodic(amp=[0, 0, 0, 0, 0, 3], preriod=[0, 0, 0, 0, 0, 1.5], ref=103)
+    
+def center_gear(x, y):
+    move_obj()
+    pick_obj(x, y)
+    
+    task_compliance_ctrl()
+    set_stiffnessx([100, 100, 100, 500, 500, 500], 0.5)
+    set_desired_force(Fd=[0, 0, -5, 0, 0, 0,], dir=[0, 0, 1, 0, 0, 1])
+    if check_force_condition(axis=DR_AXIS_Z, min=5, ref=DR_TOOL):
+        check_gear()
+        #amove_periodic(preriod=[0, 0, 0, 0, 0, 1.5], ref=DR_TOOL)
+    
+    release_compliance_ctrl()
+    
+    
+    
+#task_compliance_ctrl()
+#set_stiffnessx([100, 100, 100, 500, 500, 500], 0.5)
+#release_compliance_ctrl()
+
+setvel(1500, 1000)
+pick_obj(80,90)
+put_obj()
+
+pick_obj(23.530, 178.910)
+put_obj()
+
+pick_obj(127.040, 184.250)
+put_obj()
+
+center_gear(77.790, 151.130)
+
+#compliance_ctrl 종료 위치제어 시작
+release_compliance_ctrl()

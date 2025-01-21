@@ -1,0 +1,11 @@
+set_velx(10)
+set_accx(10)
+
+def main():
+    
+    amovel([0, 30, 0, 0, 0, 0], mod=DR_MV_MOD_REL, ref=DR_TOOL)
+    while True :
+        force = get_tool_force()
+        tp_log("y = {}".format(force[1]))
+        
+main()

@@ -1,0 +1,133 @@
+# Example Data
+L_pos1 = posx(348.00, -158.00, 70.00, 50.43,180.00,48.87) # Teaching pose1
+L_pos2 = posx(450.00, -158.00, 70.00, 50.43,180.00,48.87) # Teaching pose2
+L_pos3 = posx(348.00, -54.00, 70.00, 50.43,180.00,48.87) # Teaching pose3
+L_pos4 = posx(450.00, -54.00, 70.00, 50.43,180.00,48.87) # Teaching pose4
+R_pos1 = posx(351.00, 42.50, 70.00, 50.43,180.00,48.87) # Teaching pose1
+R_pos2 = posx(453.00, 42.50, 70.00, 50.43,180.00,48.87) # Teaching pose2
+R_pos3 = posx(351.00, 147.00, 70.00, 50.43,180.00,48.87) # Teaching pose3
+R_pos4 = posx(453.00, 147.00, 70.00, 50.43,180.00,48.87) # Teaching pose4
+
+direction = 0 # Normal Pallet -> 0: Snake, 1: Zigzag / Rhombus Pallet -> 2: Snake, 3: Zigzag
+row = 3 
+column = 3 
+stack = 1 
+thickness = 0 
+point_offset = [0, 0, 0] # Offset for calculated pose
+
+def gripper_control():
+    if get_digital_input(1)==ON:
+        set_digital_output(2,ON)
+        set_digital_output(1,OFF)
+        wait(0.50)
+        
+    elif get_digital_input(1)==OFF:
+        set_digital_output(2,ON)
+        set_digital_output(1,OFF)
+        wait(0.50)
+        
+    else:
+        pass
+    wait(0.01)
+def grip():
+    set_digital_output(1,ON)
+    # SetNode
+    set_digital_output(2,OFF)
+    # WaitNode
+    wait(0.50)
+
+def release():
+    # SetNode
+    set_digital_output(1,OFF)
+    # SetNode
+    set_digital_output(2,ON)
+    # WaitNode
+    wait(0.50)
+
+def grip_detect():
+    # SetNode
+    set_ref_coord(1)
+    # RepeatNode
+    while True:
+        task_compliance_ctrl()
+        set_stiffnessx([3000.00, 3000.00, 100.00, 200.00, 200.00, 200.00],time=0.0)
+        set_desired_force([0.00, 0.00, 15.00, 0.00, 0.00, 0.00],[0,0,1,0,0,0],time=0.0,mod=DR_FC_MOD_REL)
+        if check_force_condition(DR_AXIS_Z, min=5, ref=DR_TOOL):
+            break
+            
+        else:
+            continue
+            
+        
+    # ForceNode
+    release_force(time=0.0)
+    # ComplianceNode
+    release_compliance_ctrl()
+    # SetNode
+    set_ref_coord(0)
+    # MoveLNode
+    movel(posx(0.00, 0.00, 10.00, 0.00, 0.00, 0.00), radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+    # CallNode
+    global grip
+    grip()
+
+def release_detect():
+    # SetNode
+    set_ref_coord(1)
+    # RepeatNode
+    while True:
+        task_compliance_ctrl()
+        set_stiffnessx([3000.00, 3000.00, 100.00, 200.00, 200.00, 200.00],time=0.0)
+        set_desired_force([0.00, 0.00, 10.00, 0.00, 0.00, 0.00],[0,0,1,0,0,0],time=0.0,mod=DR_FC_MOD_REL)
+        if check_force_condition(DR_AXIS_Z, min=5, ref=DR_TOOL):
+            break
+            
+        else:
+            continue
+            
+        
+    # ForceNode
+    release_force(time=0.0)
+    # ComplianceNode
+    release_compliance_ctrl()
+    # SetNode
+    set_ref_coord(0)
+    # CallNode
+    global release
+    release()
+
+set_singular_handling(DR_AVOID)
+set_velj(60.0)
+set_accj(100.0)
+set_velx(250.0, 80.625)
+set_accx(1000.0, 322.5)
+
+gLoop181925838 = 0
+while gLoop181925838 < 1:
+    gripper_t_d = thread_run(gripper_control,loop=True)
+    thread_stop(gripper_t_d)
+    movej(posj(0.00, 0.00, 90.00, 0.00, 90.00, 0.00), radius=0.00)
+
+    # Total count
+    if direction < 2: # Normal Pallet
+        total_count = row * column * stack
+    else: # Rhombus Pallet
+        total_count = (row * column - int(row/2)) * stack
+
+    # Calculate Pallet Pose (Resulted in base coordinate)
+    for pallet_index in range(0, total_count): 
+        Pallet_Pose = get_pattern_point(L_pos1, L_pos2, L_pos3, L_pos4, pallet_index, direction, row, column, stack, thickness, point_offset) 
+        Release_Pose = get_pattern_point(R_pos1, R_pos2, R_pos3, R_pos4, pallet_index, direction, row, column, stack, thickness, point_offset) 
+        movel(posx(Pallet_Pose),  ref=DR_BASE)
+        movel(posx(0,0,-40,0,0,0), ref=DR_BASE, mod=DR_MV_MOD_REL)
+        grip_detect()
+        movel(posx(0, 0, 250, 0, 0, 0), radius=0.00, ref=DR_BASE, mod=DR_MV_MOD_REL)
+        movel(posx(Release_Pose), ref=DR_BASE)
+        movel(posx(0,0,-20,0,0,0), ref=DR_BASE, mod=DR_MV_MOD_REL)
+        release_detect()
+        movel(posx(0, 0, 250, 0, 0, 0), radius=0.00, ref=DR_BASE, mod=DR_MV_MOD_REL)
+        
+    gLoop181925838 = gLoop181925838 + 1
+    movej(posj(0.00, 0.00, 90.00, 0.00, 90.00, 0.00), radius=0.00)
+
+    break

@@ -1,0 +1,223 @@
+## Title : gear_pnp_2024_12_12
+## Time : 2024-12-12 18:19:25
+Global_Task_N = 0
+Global_LF_Grip_P_List = [posx(552.00, -262.00, 194.20, 42.87, -180.00, 41.31), posx(446.00, -264.00, 194.20, 42.87, -180.00, 41.31), posx(497.50, -169.00, 194.20, 42.87, -180.00, 41.31), posx(497.50, -230.00, 194.20, 42.87, -180.00, 41.31)]
+Global_LF_Wait_Pose = posx(497.50,-230.00,194.20,50.43,180.00,48.87)
+Global_RG_Pose_Each = posx(4.50,301.00,0.00,0.00,0.00,0.00)
+Global_LF_Grip_recovery = posx(0.00,0.00,150.00,0.00,0.00,0.00)
+Global_RG_Pose_Approach = posx(0.00,0.00,-100.00,0.00,0.00,0.00)
+Global_LF_Grip_P1 = posx(552.00,-262.00,36.50,42.87,-180.00,41.31)
+Global_LF_Grip_P2 = posx(446.00,-264.00,36.50,42.87,-180.00,41.31)
+Global_LF_Grip_P3 = posx(497.50,-169.00,36.50,42.87,-180.00,41.31)
+Global_LF_Grip_P4 = posx(497.50,-230.00,36.50,42.87,-180.00,41.31)
+
+def assemble_detect():
+    global System_cnt
+    global System_s_pick_pos
+    global System_s_wait_pos_task
+    global System_s_wait_pos_joint
+    global System_s_g_place_pos
+    global System_s_g_wait_pos_task
+    global System_s_g_wait_pos_joint
+    global Global_Task_N
+    global Global_LF_Wait_Pose
+    global Global_RG_Pose_Each
+    global Global_LF_Grip_recovery
+    global Global_RG_Pose_Approach
+    global Global_LF_Grip_P1
+    global Global_LF_Grip_P2
+    global Global_LF_Grip_P3
+    global Global_LF_Grip_P4
+    # MoveLNode
+    movel(Global_RG_Pose_Approach, radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+    # SetNode
+    set_ref_coord(1)
+    # ComplianceNode
+    task_compliance_ctrl()
+    set_stiffnessx([3000.00, 3000.00, 3000.00, 200.00, 200.00, 200.00],time=0.0)
+    # ForceNode
+    set_desired_force([0.00, 0.00, 15.00, 0.00, 0.00, 0.00],[0,0,1,0,0,0],time=0.0,mod=DR_FC_MOD_REL)
+    # RepeatNode
+    while True:
+        if check_force_condition(axis=DR_AXIS_Z, min=12, ref=DR_TOOL):
+            break
+            continue
+            
+        elif check_force_condition(axis=DR_AXIS_Z, min=5, ref=DR_TOOL) and Global_Task_N == 3:
+            move_periodic(amp=[0.00, 0.00, 0.00, 0.00, 0.00, 15.00], period=[0.00, 0.00, 0.00, 0.00, 0.00, 1.50], atime=1.00, repeat=3, ref=0)
+            
+        else:
+            pass
+        
+    # ForceNode
+    release_force(time=0.0)
+    # ComplianceNode
+    release_compliance_ctrl()
+    # CallNode
+    global release
+    release()
+    # ComplianceNode
+    task_compliance_ctrl()
+    set_stiffnessx([3000.00, 3000.00, 3000.00, 200.00, 200.00, 200.00],time=0.0)
+    # ForceNode
+    set_desired_force([0.00, 0.00, -15.00, 0.00, 0.00, 0.00],[0,0,1,0,0,0],time=0.0,mod=DR_FC_MOD_REL)
+    # WaitNode
+    wait(5.00)
+    # ForceNode
+    release_force(time=0.0)
+    # ComplianceNode
+    release_compliance_ctrl()
+    # SetNode
+    set_ref_coord(0)
+    
+def grip_detect():
+    global System_cnt
+    global System_s_pick_pos
+    global System_s_wait_pos_task
+    global System_s_wait_pos_joint
+    global System_s_g_place_pos
+    global System_s_g_wait_pos_task
+    global System_s_g_wait_pos_joint
+    global Global_Task_N
+    global Global_LF_Wait_Pose
+    global Global_RG_Pose_Each
+    global Global_LF_Grip_recovery
+    global Global_RG_Pose_Approach
+    global Global_LF_Grip_P1
+    global Global_LF_Grip_P2
+    global Global_LF_Grip_P3
+    global Global_LF_Grip_P4
+    # SetNode
+    set_ref_coord(1)
+    # RepeatNode
+    while True:
+        task_compliance_ctrl()
+        set_stiffnessx([3000.00, 3000.00, 100.00, 200.00, 200.00, 200.00],time=0.0)
+        set_desired_force([0.00, 0.00, 15.00, 0.00, 0.00, 0.00],[0,0,1,0,0,0],time=0.0,mod=DR_FC_MOD_REL)
+        if check_force_condition(DR_AXIS_Z, min=5, ref=DR_TOOL):
+            break
+            
+        else:
+            continue
+            
+        
+    # ForceNode
+    release_force(time=0.0)
+    # ComplianceNode
+    release_compliance_ctrl()
+    # SetNode
+    set_ref_coord(0)
+    # MoveLNode
+    movel(posx(0.00, 0.00, 10.00, 0.00, 0.00, 0.00), radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+    # CallNode
+    global grip
+    grip()
+    
+def release():
+    global System_cnt
+    global System_s_pick_pos
+    global System_s_wait_pos_task
+    global System_s_wait_pos_joint
+    global System_s_g_place_pos
+    global System_s_g_wait_pos_task
+    global System_s_g_wait_pos_joint
+    global Global_Task_N
+    global Global_LF_Wait_Pose
+    global Global_RG_Pose_Each
+    global Global_LF_Grip_recovery
+    global Global_RG_Pose_Approach
+    global Global_LF_Grip_P1
+    global Global_LF_Grip_P2
+    global Global_LF_Grip_P3
+    global Global_LF_Grip_P4
+    # SetNode
+    set_digital_output(1,OFF)
+    # SetNode
+    set_digital_output(2,ON)
+    # WaitNode
+    wait(0.50)
+    
+def grip():
+    global System_cnt
+    global System_s_pick_pos
+    global System_s_wait_pos_task
+    global System_s_wait_pos_joint
+    global System_s_g_place_pos
+    global System_s_g_wait_pos_task
+    global System_s_g_wait_pos_joint
+    global Global_Task_N
+    global Global_LF_Wait_Pose
+    global Global_RG_Pose_Each
+    global Global_LF_Grip_recovery
+    global Global_RG_Pose_Approach
+    global Global_LF_Grip_P1
+    global Global_LF_Grip_P2
+    global Global_LF_Grip_P3
+    global Global_LF_Grip_P4
+    # SetNode
+    set_digital_output(1,ON)
+    # SetNode
+    set_digital_output(2,OFF)
+    # WaitNode
+    wait(0.50)
+    
+def gripper_control():
+    global System_cnt
+    global System_s_pick_pos
+    global System_s_wait_pos_task
+    global System_s_wait_pos_joint
+    global System_s_g_place_pos
+    global System_s_g_wait_pos_task
+    global System_s_g_wait_pos_joint
+    global Global_Task_N
+    global Global_LF_Wait_Pose
+    global Global_RG_Pose_Each
+    global Global_LF_Grip_recovery
+    global Global_RG_Pose_Approach
+    global Global_LF_Grip_P1
+    global Global_LF_Grip_P2
+    global Global_LF_Grip_P3
+    global Global_LF_Grip_P4
+    if get_digital_input(1)==ON:
+        set_digital_output(2,ON)
+        set_digital_output(1,OFF)
+        wait(0.50)
+        
+    elif get_digital_input(1)==OFF:
+        set_digital_output(2,ON)
+        set_digital_output(1,OFF)
+        wait(0.50)
+        
+    else:
+        pass
+    wait(0.01)
+set_singular_handling(DR_AVOID)
+set_velj(60.0)
+set_accj(100.0)
+set_velx(250.0, 80.625)
+set_accx(1000.0, 322.5)
+gLoop181925838 = 0
+while gLoop181925838 < 1:
+    # MoveJNode
+    movej(posj(0.00, 0.00, 90.00, 0.00, 90.00, 0.00), radius=0.00, ra=DR_MV_RA_DUPLICATE)
+    # RepeatNode
+    while Global_Task_N<4:
+        gripper_t_d = thread_run(gripper_control,loop=True)
+        thread_stop(gripper_t_d)
+        if Global_Task_N<4:
+            movel(Global_LF_Grip_P_List[Global_Task_N], radius=0.00, ref=0, mod=DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+            movel(posx(0.00, 0.00, -140.00, 0.00, 0.00, 0.00), radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+            
+        else:
+            exit()
+            
+        grip_detect()
+        movel(Global_LF_Grip_recovery, radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+        movel(Global_RG_Pose_Each, radius=0.00, ref=0, mod=DR_MV_MOD_REL, ra=DR_MV_RA_DUPLICATE, app_type=DR_MV_APP_NONE)
+        assemble_detect()
+        Global_Task_N += 1
+        
+    # MoveJNode
+    movej(posj(0.00, 0.00, 90.00, 0.00, 90.00, 0.00), radius=0.00, ra=DR_MV_RA_DUPLICATE)
+    gLoop181925838 = gLoop181925838 + 1
+    break
